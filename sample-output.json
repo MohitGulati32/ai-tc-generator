@@ -1,0 +1,535 @@
+{
+  "summary": "Comprehensive test suite for email/password login functionality covering successful authentication, edge cases, negative scenarios, and API-level validation. Focus areas include input validation, security controls, session management, and error handling.",
+  "happy_path": [
+    {
+      "id": "HP-001",
+      "title": "Successful login with valid email and password",
+      "preconditions": [
+        "User has a registered account",
+        "User is on the login page",
+        "Account is active and not locked"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter a valid registered email address in the email field",
+        "Enter the correct password in the password field",
+        "Click the Login button"
+      ],
+      "expected_result": "User is authenticated successfully and redirected to their account dashboard/home page. A valid session is created.",
+      "priority": "P1"
+    },
+    {
+      "id": "HP-002",
+      "title": "Successful login with email containing uppercase letters",
+      "preconditions": [
+        "User has a registered account with a lowercase email",
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter the registered email address using mixed or uppercase letters (e.g., USER@EXAMPLE.COM)",
+        "Enter the correct password",
+        "Click the Login button"
+      ],
+      "expected_result": "User is authenticated successfully. Email comparison is case-insensitive.",
+      "priority": "P1"
+    },
+    {
+      "id": "HP-003",
+      "title": "Successful login and session persistence across page refresh",
+      "preconditions": [
+        "User has a registered account",
+        "User is on the login page"
+      ],
+      "steps": [
+        "Login with valid credentials",
+        "After successful login, refresh the browser page"
+      ],
+      "expected_result": "User remains logged in after page refresh. Session is maintained.",
+      "priority": "P2"
+    },
+    {
+      "id": "HP-004",
+      "title": "Successful login redirects to originally requested page",
+      "preconditions": [
+        "User is not logged in",
+        "User attempts to access a protected page directly"
+      ],
+      "steps": [
+        "Navigate directly to a protected URL",
+        "Get redirected to the login page",
+        "Enter valid credentials",
+        "Click the Login button"
+      ],
+      "expected_result": "User is authenticated and redirected to the originally requested protected page.",
+      "priority": "P2"
+    },
+    {
+      "id": "HP-005",
+      "title": "Successful login with Remember Me option",
+      "preconditions": [
+        "User has a registered account",
+        "Login page has a Remember Me checkbox"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter valid email and password",
+        "Check the Remember Me checkbox",
+        "Click the Login button",
+        "Close the browser and reopen it",
+        "Navigate to the application URL"
+      ],
+      "expected_result": "User remains logged in after closing and reopening the browser. A persistent session cookie is set.",
+      "priority": "P2"
+    }
+  ],
+  "edge_cases": [
+    {
+      "id": "EC-001",
+      "title": "Login with email containing leading and trailing whitespace",
+      "preconditions": [
+        "User has a registered account",
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter the registered email with leading and trailing spaces (e.g., '  user@example.com  ')",
+        "Enter the correct password",
+        "Click the Login button"
+      ],
+      "expected_result": "System trims whitespace and authenticates the user successfully, or provides a clear validation error.",
+      "priority": "P2"
+    },
+    {
+      "id": "EC-002",
+      "title": "Login with very long valid email address",
+      "preconditions": [
+        "A user account exists with a very long email (close to max allowed length)",
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter a valid email address at the maximum allowed character length",
+        "Enter the correct password",
+        "Click the Login button"
+      ],
+      "expected_result": "User is authenticated successfully without any truncation or error.",
+      "priority": "P3"
+    },
+    {
+      "id": "EC-003",
+      "title": "Login with password containing special characters",
+      "preconditions": [
+        "User account exists with a password containing special characters (e.g., !@#$%^&*())",
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter the registered email",
+        "Enter the password containing special characters",
+        "Click the Login button"
+      ],
+      "expected_result": "User is authenticated successfully. Special characters in passwords are handled correctly.",
+      "priority": "P2"
+    },
+    {
+      "id": "EC-004",
+      "title": "Login attempt on an account that was just created",
+      "preconditions": [
+        "User has just completed registration",
+        "Email verification is completed if required"
+      ],
+      "steps": [
+        "Navigate to the login page immediately after registration",
+        "Enter newly registered email and password",
+        "Click the Login button"
+      ],
+      "expected_result": "Newly registered user can log in successfully without any delay or error.",
+      "priority": "P2"
+    },
+    {
+      "id": "EC-005",
+      "title": "Login with password containing Unicode or international characters",
+      "preconditions": [
+        "User account exists with a password containing Unicode characters",
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter the registered email",
+        "Enter the password with Unicode characters (e.g., accented letters, CJK characters)",
+        "Click the Login button"
+      ],
+      "expected_result": "System handles Unicode characters correctly and authenticates the user successfully.",
+      "priority": "P3"
+    },
+    {
+      "id": "EC-006",
+      "title": "Login with JavaScript disabled in the browser",
+      "preconditions": [
+        "User has a registered account",
+        "JavaScript is disabled in the browser"
+      ],
+      "steps": [
+        "Disable JavaScript in the browser settings",
+        "Navigate to the login page",
+        "Enter valid credentials",
+        "Submit the login form"
+      ],
+      "expected_result": "Login either works via server-side form submission or an appropriate message informs the user that JavaScript is required.",
+      "priority": "P3"
+    },
+    {
+      "id": "EC-007",
+      "title": "Simultaneous login from multiple devices",
+      "preconditions": [
+        "User has a registered account",
+        "Two different devices or browsers are available"
+      ],
+      "steps": [
+        "Log in with valid credentials on Device 1",
+        "Log in with the same valid credentials on Device 2"
+      ],
+      "expected_result": "System either allows concurrent sessions per defined policy or invalidates the previous session with an appropriate notification.",
+      "priority": "P2"
+    }
+  ],
+  "negative_scenarios": [
+    {
+      "id": "NS-001",
+      "title": "Login with incorrect password",
+      "preconditions": [
+        "User has a registered account",
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter a valid registered email address",
+        "Enter an incorrect password",
+        "Click the Login button"
+      ],
+      "expected_result": "Login fails. A generic error message is displayed (e.g., 'Invalid email or password'). User is not authenticated.",
+      "priority": "P1"
+    },
+    {
+      "id": "NS-002",
+      "title": "Login with unregistered email address",
+      "preconditions": [
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter an email address that does not exist in the system",
+        "Enter any password",
+        "Click the Login button"
+      ],
+      "expected_result": "Login fails. A generic error message is displayed that does not reveal whether the email exists (e.g., 'Invalid email or password').",
+      "priority": "P1"
+    },
+    {
+      "id": "NS-003",
+      "title": "Login with empty email field",
+      "preconditions": [
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Leave the email field empty",
+        "Enter any password",
+        "Click the Login button"
+      ],
+      "expected_result": "Login is prevented. A validation error is displayed indicating that the email field is required.",
+      "priority": "P1"
+    },
+    {
+      "id": "NS-004",
+      "title": "Login with empty password field",
+      "preconditions": [
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter a valid registered email address",
+        "Leave the password field empty",
+        "Click the Login button"
+      ],
+      "expected_result": "Login is prevented. A validation error is displayed indicating that the password field is required.",
+      "priority": "P1"
+    },
+    {
+      "id": "NS-005",
+      "title": "Login with both fields empty",
+      "preconditions": [
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Leave both email and password fields empty",
+        "Click the Login button"
+      ],
+      "expected_result": "Login is prevented. Validation errors are displayed for both fields.",
+      "priority": "P1"
+    },
+    {
+      "id": "NS-006",
+      "title": "Login with invalid email format",
+      "preconditions": [
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter an invalid email format (e.g., 'notanemail', 'user@', '@domain.com', 'user@domain')",
+        "Enter any password",
+        "Click the Login button"
+      ],
+      "expected_result": "Login is prevented. A validation error is displayed indicating the email format is invalid.",
+      "priority": "P1"
+    },
+    {
+      "id": "NS-007",
+      "title": "Account lockout after multiple failed login attempts",
+      "preconditions": [
+        "User has a registered account",
+        "Account lockout policy is configured (e.g., 5 failed attempts)"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter the valid email with an incorrect password",
+        "Repeat step 2 until the maximum allowed failed attempts is reached",
+        "Attempt to log in one more time"
+      ],
+      "expected_result": "Account is locked after the threshold is reached. An appropriate message is displayed (e.g., 'Account locked. Please reset your password or try again later.').",
+      "priority": "P1"
+    },
+    {
+      "id": "NS-008",
+      "title": "Login attempt with a deactivated or suspended account",
+      "preconditions": [
+        "A user account exists but has been deactivated or suspended by an admin"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter the email and correct password of the deactivated account",
+        "Click the Login button"
+      ],
+      "expected_result": "Login fails. A message is displayed informing the user their account is deactivated/suspended with guidance on next steps.",
+      "priority": "P1"
+    },
+    {
+      "id": "NS-009",
+      "title": "Login attempt with an unverified email account",
+      "preconditions": [
+        "User registered but has not verified their email address"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter the email and correct password of the unverified account",
+        "Click the Login button"
+      ],
+      "expected_result": "Login fails or is restricted. User is prompted to verify their email address before accessing the account.",
+      "priority": "P2"
+    },
+    {
+      "id": "NS-010",
+      "title": "SQL injection attempt in email field",
+      "preconditions": [
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter a SQL injection string in the email field (e.g., \"' OR '1'='1'; --\")",
+        "Enter any password",
+        "Click the Login button"
+      ],
+      "expected_result": "Login fails. The system sanitizes the input and does not execute any injected SQL. No unauthorized access is granted.",
+      "priority": "P1"
+    },
+    {
+      "id": "NS-011",
+      "title": "XSS injection attempt in login fields",
+      "preconditions": [
+        "User is on the login page"
+      ],
+      "steps": [
+        "Navigate to the login page",
+        "Enter a script tag or XSS payload in the email field (e.g., \"<script>alert('XSS')</script>\")",
+        "Enter any password",
+        "Click the Login button"
+      ],
+      "expected_result": "The input is sanitized and escaped. No script is executed. A validation error is displayed.",
+      "priority": "P1"
+    },
+    {
+      "id": "NS-012",
+      "title": "Login using a previously used expired session token",
+      "preconditions": [
+        "User has a previously logged-in session that has expired"
+      ],
+      "steps": [
+        "Allow a user session to expire",
+        "Attempt to access a protected page using the expired session token"
+      ],
+      "expected_result": "Access is denied. User is redirected to the login page. Expired tokens are not accepted.",
+      "priority": "P1"
+    }
+  ],
+  "api_tests": [
+    {
+      "id": "API-001",
+      "title": "POST /login returns 200 with valid credentials",
+      "preconditions": [
+        "API endpoint is accessible",
+        "A valid user account exists"
+      ],
+      "steps": [
+        "Send a POST request to the /login endpoint",
+        "Include valid email and password in the request body as JSON: {\"email\": \"user@example.com\", \"password\": \"validPassword123\"}"
+      ],
+      "expected_result": "Response status is 200 OK. Response body contains a valid authentication token (e.g., JWT) and user details. Token expiry is set appropriately.",
+      "priority": "P1"
+    },
+    {
+      "id": "API-002",
+      "title": "POST /login returns 401 with invalid credentials",
+      "preconditions": [
+        "API endpoint is accessible"
+      ],
+      "steps": [
+        "Send a POST request to the /login endpoint",
+        "Include a valid email but incorrect password: {\"email\": \"user@example.com\", \"password\": \"wrongPassword\"}"
+      ],
+      "expected_result": "Response status is 401 Unauthorized. Response body contains a generic error message. No token is returned.",
+      "priority": "P1"
+    },
+    {
+      "id": "API-003",
+      "title": "POST /login returns 400 with missing email field",
+      "preconditions": [
+        "API endpoint is accessible"
+      ],
+      "steps": [
+        "Send a POST request to the /login endpoint",
+        "Omit the email field from the request body: {\"password\": \"somePassword\"}"
+      ],
+      "expected_result": "Response status is 400 Bad Request. Response body contains a validation error specifying that email is required.",
+      "priority": "P1"
+    },
+    {
+      "id": "API-004",
+      "title": "POST /login returns 400 with missing password field",
+      "preconditions": [
+        "API endpoint is accessible"
+      ],
+      "steps": [
+        "Send a POST request to the /login endpoint",
+        "Omit the password field from the request body: {\"email\": \"user@example.com\"}"
+      ],
+      "expected_result": "Response status is 400 Bad Request. Response body contains a validation error specifying that password is required.",
+      "priority": "P1"
+    },
+    {
+      "id": "API-005",
+      "title": "POST /login returns 400 with invalid email format",
+      "preconditions": [
+        "API endpoint is accessible"
+      ],
+      "steps": [
+        "Send a POST request to the /login endpoint",
+        "Include an invalid email format: {\"email\": \"invalidemail\", \"password\": \"somePassword\"}"
+      ],
+      "expected_result": "Response status is 400 Bad Request. Response body contains a validation error for invalid email format.",
+      "priority": "P2"
+    },
+    {
+      "id": "API-006",
+      "title": "POST /login rate limiting after repeated failed attempts",
+      "preconditions": [
+        "API endpoint is accessible",
+        "Rate limiting is configured"
+      ],
+      "steps": [
+        "Send multiple POST requests to /login with invalid credentials in rapid succession",
+        "Exceed the configured rate limit threshold"
+      ],
+      "expected_result": "Response status is 429 Too Many Requests after the threshold is exceeded. A Retry-After header may be included.",
+      "priority": "P1"
+    },
+    {
+      "id": "API-007",
+      "title": "POST /login response does not expose sensitive information",
+      "preconditions": [
+        "API endpoint is accessible"
+      ],
+      "steps": [
+        "Send a POST request with invalid credentials",
+        "Inspect the response body and headers"
+      ],
+      "expected_result": "Response does not reveal whether the email exists or specific reason for failure. No password hashes, internal stack traces, or sensitive server info are exposed.",
+      "priority": "P1"
+    },
+    {
+      "id": "API-008",
+      "title": "POST /login enforces HTTPS and rejects HTTP",
+      "preconditions": [
+        "API endpoint is configured with HTTPS"
+      ],
+      "steps": [
+        "Send a POST request to the /login endpoint using HTTP (not HTTPS)"
+      ],
+      "expected_result": "Request is either rejected or redirected to HTTPS. Credentials are never transmitted over unencrypted connections.",
+      "priority": "P1"
+    },
+    {
+      "id": "API-009",
+      "title": "POST /login returns valid JWT token structure",
+      "preconditions": [
+        "API endpoint is accessible",
+        "A valid user account exists",
+        "System uses JWT"
+      ],
+      "steps": [
+        "Send a POST request to /login with valid credentials",
+        "Decode the returned JWT token and inspect its structure"
+      ],
+      "expected_result": "JWT contains a valid header, payload, and signature. Payload includes user identifier, issued-at timestamp, and expiration time. Algorithm is secure (e.g., RS256 or HS256).",
+      "priority": "P2"
+    },
+    {
+      "id": "API-010",
+      "title": "POST /login with empty request body",
+      "preconditions": [
+        "API endpoint is accessible"
+      ],
+      "steps": [
+        "Send a POST request to the /login endpoint with an empty JSON body: {}"
+      ],
+      "expected_result": "Response status is 400 Bad Request. Validation errors are returned for both email and password fields.",
+      "priority": "P2"
+    },
+    {
+      "id": "API-011",
+      "title": "POST /login with Content-Type other than application/json",
+      "preconditions": [
+        "API endpoint is accessible"
+      ],
+      "steps": [
+        "Send a POST request to /login with credentials as form-urlencoded or plain text instead of JSON"
+      ],
+      "expected_result": "Response status is 415 Unsupported Media Type or 400 Bad Request with a clear error message if the endpoint only accepts JSON.",
+      "priority": "P3"
+    }
+  ],
+  "coverage_score": 92,
+  "risk_areas": [
+    "Security: Brute force and credential stuffing attacks — ensure account lockout and rate limiting are properly implemented",
+    "Security: SQL injection and XSS through login input fields — ensure all inputs are sanitized and parameterized queries are used",
+    "Security: Session management — ensure tokens are invalidated on logout, expiry is enforced, and sessions cannot be hijacked",
+    "Security: Sensitive data exposure — error messages must not reveal whether an email exists in the system (user enumeration)",
+    "Security: Transmission security — all credentials must be sent over HTTPS only; tokens must not appear in URLs or logs",
+    "Authentication: Password comparison — ensure passwords are hashed (e.g., bcrypt) and never stored or logged in plain text",
+    "UX: Clear and user-friendly error messages without compromising security details",
+    "Reliability: Login service availability and performance under high concurrent login loads",
+    "Integration: Token-based authentication compatibility with downstream services and APIs",
+    "Compliance: GDPR/privacy regulations around login attempt logging and failed authentication records"
+  ]
+}
