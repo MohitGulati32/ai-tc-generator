@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
+import fs from "fs";
 import { generateWithEval } from "./scripts/pipeline.js";
 import { logEvalResult } from "./scripts/logger.js";
 
@@ -37,6 +38,23 @@ app.post("/api/generate", async (req, res) => {
   } catch (err) {
     console.error("Pipeline error:", err.message);
     res.status(500).json({ error: "Pipeline failed" });
+  }
+});
+
+app.get("/api/logs", (req, res) => {
+  try {
+    if (!fs.existsSync("eval_log.jsonl")) {
+      return res.json([]);
+    }
+    const lines = fs.readFileSync("eval_log.jsonl", "utf8")
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map(line => JSON.parse(line));
+    res.json(lines);
+  } catch (err) {
+    console.error("Log read error:", err.message);
+    res.status(500).json({ error: "Failed to read logs" });
   }
 });
 

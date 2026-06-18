@@ -3,6 +3,7 @@ import StoryInput from './components/StoryInput';
 import TestResults from './components/TestResults';
 import CoverageMeter from './components/CoverageMeter';
 import ExportButton from './components/ExportButton';
+import EvalDashboard from './components/EvalDashboard';
 
 export default function App() {
   const [tests, setTests] = useState(null);
@@ -94,6 +95,10 @@ export default function App() {
             )}
           </>
         )}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-3">Eval Dashboard</h2>
+          <EvalDashboard />
+        </div>
       </div>
     </div>
   );
