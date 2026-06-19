@@ -11,6 +11,10 @@ const app = express();
 app.use(cors({ origin: "https://tc-generator-five.vercel.app" }));
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.json({ status: "ok", service: "tc-generator-api" });
+});
+
 app.post("/api/generate", async (req, res) => {
   const { story } = req.body;
 
@@ -60,6 +64,7 @@ app.get("/api/logs", (req, res) => {
   }
 });
 
-app.listen(3001, () => {
-  console.log("API server running on http://localhost:3001");
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`API server running on port ${PORT}`);
 });
