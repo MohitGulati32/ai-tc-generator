@@ -17,7 +17,7 @@ export default function EvalDashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("/api/logs")
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/logs`)
       .then((res) => res.json())
       .then((data) => {
         setLogs(data);
