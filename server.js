@@ -2,11 +2,13 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
+import cors from "cors";
 import fs from "fs";
 import { generateWithEval } from "./scripts/pipeline.js";
 import { logEvalResult } from "./scripts/logger.js";
 
 const app = express();
+app.use(cors({ origin: "https://tc-generator-five.vercel.app" }));
 app.use(express.json());
 
 app.post("/api/generate", async (req, res) => {
