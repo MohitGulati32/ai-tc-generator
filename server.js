@@ -73,6 +73,22 @@ app.get("/debug", (req, res) => {
   });
 });
 
+
+app.get("/test-api", async (req, res) => {
+  try {
+    const Anthropic = (await import("@anthropic-ai/sdk")).default;
+    const client = new Anthropic();
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 100,
+      messages: [{ role: "user", content: "Say hello in one word" }]
+    });
+    res.json({ success: true, response: response.content[0].text });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`API server running on port ${PORT}`);
