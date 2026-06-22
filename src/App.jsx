@@ -17,7 +17,7 @@ export default function App() {
     setError(null);
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
+      const timeoutId = setTimeout(() => controller.abort(), 240000);
 
       const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/generate`, {
         method: 'POST',
