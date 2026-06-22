@@ -22,7 +22,13 @@ app.post("/api/generate", async (req, res) => {
     return res.status(400).json({ error: "No story provided" });
   }
 
+  console.log("Request received:", story.slice(0, 50));
+
   try {
+    console.log("Importing pipeline...");
+    const { generateWithEval } = await import("./scripts/pipeline.js");
+    console.log("Pipeline imported, starting generation...");
+
     const {
       tests,
       evalResult,
@@ -31,6 +37,8 @@ app.post("/api/generate", async (req, res) => {
       evalUsage,
     } = await generateWithEval(story);
 
+    console.log("Generation complete, logging...");
+    const { logEvalResult } = await import("./scripts/logger.js");
     logEvalResult({
       userStory: story,
       generationUsage,
@@ -43,7 +51,8 @@ app.post("/api/generate", async (req, res) => {
 
   } catch (err) {
     console.error("Pipeline error:", err.message);
-    res.status(500).json({ error: "Pipeline failed" });
+    console.error(err.stack);
+    res.status(500).json({ error: err.message });
   }
 });
 
