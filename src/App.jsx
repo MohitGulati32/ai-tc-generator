@@ -16,11 +16,18 @@ export default function App() {
     setIsLoading(true);
     setError(null);
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000);
+
       const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ story })
+        body: JSON.stringify({ story }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
+
       const data = await response.json();
       setTests(data.tests);
       setEvalResult(data.evalResult);
