@@ -64,6 +64,15 @@ app.get("/api/logs", (req, res) => {
   }
 });
 
+app.get("/debug", (req, res) => {
+  res.json({
+    hasApiKey: !!process.env.ANTHROPIC_API_KEY,
+    apiKeyLength: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.length : 0,
+    nodeEnv: process.env.NODE_ENV,
+    port: process.env.PORT,
+  });
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`API server running on port ${PORT}`);
