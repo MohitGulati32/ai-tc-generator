@@ -10,6 +10,7 @@ import { logEvalResult } from "./scripts/logger.js";
 const app = express();
 app.use(cors({ origin: "https://tc-generator-five.vercel.app" }));
 app.use(express.json());
+app.use((req, res, next) => { res.setTimeout(120000); next(); });
 
 app.get("/", (req, res) => {
   res.json({ status: "ok", service: "tc-generator-api" });

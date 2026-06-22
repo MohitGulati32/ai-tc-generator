@@ -1,7 +1,7 @@
 import { generateTestCases } from "./generator.js";
 import { evaluateTestSuite } from "./evaluator.js";
 
-export async function generateWithEval(userStory, maxRevisions = 2) {
+export async function generateWithEval(userStory, maxRevisions = 1) {
   console.log("Step 1: Generating test suite...");
   let generation = await generateTestCases(userStory);
   let tests = generation.result;
