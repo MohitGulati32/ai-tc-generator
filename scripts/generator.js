@@ -16,7 +16,8 @@ Always respond with valid JSON only. No markdown, no backticks, no extra text.
   "coverage_score": 0,
   "risk_areas": []
 }
-Each test case must have: id, title, preconditions, steps[], expected_result, priority (P1/P2/P3)`;
+Each test case must have: id, title, preconditions, steps[], expected_result, priority (P1/P2/P3).
+Limit your response to a maximum of 20 test cases total across all categories. Prioritise P1 test cases first.`;
 
 export async function generateTestCases(userStory) {
   const response = await client.messages.create({
