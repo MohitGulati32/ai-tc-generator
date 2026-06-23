@@ -25,21 +25,27 @@ app.post("/api/generate", async (req, res) => {
 
   console.log("Request received:", story.slice(0, 50));
 
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+
+  const sendStatus = (message) => {
+    res.write(`event: status\ndata: ${JSON.stringify({ message })}\n\n`);
+  };
+
+  const sendResult = (data) => {
+    res.write(`event: result\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  const sendError = (message) => {
+    res.write(`event: error\ndata: ${JSON.stringify({ message })}\n\n`);
+    res.end();
+  };
+
   try {
-    console.log("Importing pipeline...");
-    const { generateWithEval } = await import("./scripts/pipeline.js");
-    console.log("Pipeline imported, starting generation...");
+    const { tests, evalResult, revisionsUsed, generationUsage, evalUsage } =
+      await generateWithEval(story, 2, sendStatus);
 
-    const {
-      tests,
-      evalResult,
-      revisionsUsed,
-      generationUsage,
-      evalUsage,
-    } = await generateWithEval(story);
-
-    console.log("Generation complete, logging...");
-    const { logEvalResult } = await import("./scripts/logger.js");
     logEvalResult({
       userStory: story,
       generationUsage,
@@ -48,12 +54,12 @@ app.post("/api/generate", async (req, res) => {
       revisionsUsed,
     });
 
-    res.json({ tests, evalResult, revisionsUsed });
+    sendResult({ tests, evalResult, revisionsUsed });
+    res.end();
 
   } catch (err) {
     console.error("Pipeline error:", err.message);
-    console.error(err.stack);
-    res.status(500).json({ error: err.message });
+    sendError("Pipeline failed");
   }
 });
 

@@ -5,39 +5,69 @@ import CoverageMeter from './components/CoverageMeter';
 import ExportButton from './components/ExportButton';
 import EvalDashboard from './components/EvalDashboard';
 
+
 export default function App() {
   const [tests, setTests] = useState(null);
   const [evalResult, setEvalResult] = useState(null);
   const [revisionsUsed, setRevisionsUsed] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const [status, setStatus] = useState('');
   const handleGenerate = async (story) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 240000);
+  setIsLoading(true);
+  setError(null);
+  setStatus('');
+  setTests(null);
+  setEvalResult(null);
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ story }),
-        signal: controller.signal
-      });
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ story })
+    });
 
-      clearTimeout(timeoutId);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
 
-      const data = await response.json();
-      setTests(data.tests);
-      setEvalResult(data.evalResult);
-      setRevisionsUsed(data.revisionsUsed);
-    } catch (err) {
-      setError('Generation failed. Please try again.');
-    } finally {
-      setIsLoading(false);
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (line.startsWith('event: status')) continue;
+        if (line.startsWith('event: result')) continue;
+        if (line.startsWith('event: error')) continue;
+        if (line.startsWith('data: ')) {
+          try {
+            const parsed = JSON.parse(line.slice(6));
+            if (parsed.message && !parsed.tests) {
+              setStatus(parsed.message);
+            } else if (parsed.tests) {
+              setTests(parsed.tests);
+              setEvalResult(parsed.evalResult);
+              setRevisionsUsed(parsed.revisionsUsed);
+              setStatus('');
+            } else if (parsed.error) {
+              setError(parsed.error);
+            }
+          } catch (e) {
+            // skip unparseable lines
+          }
+        }
+      }
     }
-  };
+  } catch (err) {
+    setError('Generation failed. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
@@ -49,7 +79,12 @@ export default function App() {
           </p>
         </div>
         <StoryInput onGenerate={handleGenerate} isLoading={isLoading} />
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+{status && (
+  <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
+    <span className="animate-pulse mr-2">●</span>{status}
+  </div>
+)}
+{error && <p className="text-red-600 text-sm">{error}</p>}
         {tests && (
           <>
             <CoverageMeter score={tests.coverage_score} />

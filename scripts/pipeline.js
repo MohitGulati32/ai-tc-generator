@@ -1,13 +1,13 @@
 import { generateTestCases } from "./generator.js";
 import { evaluateTestSuite } from "./evaluator.js";
 
-export async function generateWithEval(userStory, maxRevisions = 1) {
-  console.log("Step 1: Generating test suite...");
+export async function generateWithEval(userStory, maxRevisions = 2, onStatus = () => {}) {
+  onStatus("Generating test suite...");
   let generation = await generateTestCases(userStory);
   let tests = generation.result;
   let generationUsage = generation.usage;
 
-  console.log("Step 2: Evaluating output...");
+  onStatus("Evaluating output...");
   let evaluation = await evaluateTestSuite(userStory, tests);
   let evalResult = evaluation.result;
   let evalUsage = evaluation.usage;
@@ -16,8 +16,7 @@ export async function generateWithEval(userStory, maxRevisions = 1) {
 
   while (evalResult.recommendation === "revise" && revisions < maxRevisions) {
     revisions++;
-    console.log(`Revision pass ${revisions} of ${maxRevisions}...`);
-    console.log("Revision notes:", evalResult.revision_notes);
+    onStatus(`Revision pass ${revisions} of ${maxRevisions} - improving test suite...`);
 
     const revisedPrompt = `${userStory}
 
@@ -29,14 +28,13 @@ Please address these specifically in the new output.`;
     tests = generation.result;
     generationUsage = generation.usage;
 
+    onStatus("Re-evaluating revised output...");
     evaluation = await evaluateTestSuite(userStory, tests);
     evalResult = evaluation.result;
     evalUsage = evaluation.usage;
   }
 
-  console.log(`Pipeline complete. Revisions used: ${revisions}`);
-  console.log(`Final recommendation: ${evalResult.recommendation}`);
-  console.log(`Overall quality score: ${evalResult.overall_quality_score}`);
+  onStatus(`Pipeline complete. Score: ${evalResult.overall_quality_score}/100 - ${evalResult.recommendation.toUpperCase()}`);
 
   return {
     tests,
