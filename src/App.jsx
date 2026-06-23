@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import StoryInput from './components/StoryInput';
 import TestResults from './components/TestResults';
 import CoverageMeter from './components/CoverageMeter';
@@ -13,6 +13,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState('');
   const [error, setError] = useState(null);
+  const resultsReceived = useRef(false);
 
   const handleGenerate = async (story) => {
     setIsLoading(true);
@@ -21,6 +22,7 @@ export default function App() {
     setTests(null);
     setEvalResult(null);
     setTokenInfo(null);
+    resultsReceived.current = false;
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/generate`, {
@@ -51,6 +53,7 @@ export default function App() {
               if (parsed.message && !parsed.tests) {
                 setStatus(parsed.message);
               } else if (parsed.tests) {
+                resultsReceived.current = true;
                 setTests(parsed.tests);
                 setEvalResult(parsed.evalResult);
                 setRevisionsUsed(parsed.revisionsUsed);
@@ -71,12 +74,10 @@ export default function App() {
         }
       }
     } catch (err) {
-  if (err.name === 'AbortError') {
-    setError('Request timed out. Please try again.');
-  } else if (!tests) {
-    setError('Generation failed. Please try again.');
-  }
-} finally {
+      if (!resultsReceived.current) {
+        setError('Generation failed. Please try again.');
+      }
+    } finally {
       setIsLoading(false);
     }
   };
