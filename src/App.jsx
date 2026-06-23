@@ -91,6 +91,9 @@ export default function App() {
             Paste a user story and get a full test suite instantly
           </p>
         </div>
+        <div className="block sm:hidden bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-sm text-yellow-800">
+          For best results, use a desktop browser. The AI pipeline takes 2-3 minutes and may time out on mobile.
+        </div>
         <StoryInput onGenerate={handleGenerate} isLoading={isLoading} />
         {status && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
