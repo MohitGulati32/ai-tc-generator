@@ -71,8 +71,12 @@ export default function App() {
         }
       }
     } catch (err) {
-      setError('Generation failed. Please try again.');
-    } finally {
+  if (err.name === 'AbortError') {
+    setError('Request timed out. Please try again.');
+  } else if (!tests) {
+    setError('Generation failed. Please try again.');
+  }
+} finally {
       setIsLoading(false);
     }
   };
