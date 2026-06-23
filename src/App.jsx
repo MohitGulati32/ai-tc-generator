@@ -5,69 +5,77 @@ import CoverageMeter from './components/CoverageMeter';
 import ExportButton from './components/ExportButton';
 import EvalDashboard from './components/EvalDashboard';
 
-
 export default function App() {
   const [tests, setTests] = useState(null);
   const [evalResult, setEvalResult] = useState(null);
   const [revisionsUsed, setRevisionsUsed] = useState(0);
+  const [tokenInfo, setTokenInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [status, setStatus] = useState('');
+  const [error, setError] = useState(null);
+
   const handleGenerate = async (story) => {
-  setIsLoading(true);
-  setError(null);
-  setStatus('');
-  setTests(null);
-  setEvalResult(null);
+    setIsLoading(true);
+    setError(null);
+    setStatus('');
+    setTests(null);
+    setEvalResult(null);
+    setTokenInfo(null);
 
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ story })
-    });
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ story })
+      });
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
 
-      for (const line of lines) {
-        if (line.startsWith('event: status')) continue;
-        if (line.startsWith('event: result')) continue;
-        if (line.startsWith('event: error')) continue;
-        if (line.startsWith('data: ')) {
-          try {
-            const parsed = JSON.parse(line.slice(6));
-            if (parsed.message && !parsed.tests) {
-              setStatus(parsed.message);
-            } else if (parsed.tests) {
-              setTests(parsed.tests);
-              setEvalResult(parsed.evalResult);
-              setRevisionsUsed(parsed.revisionsUsed);
-              setStatus('');
-            } else if (parsed.error) {
-              setError(parsed.error);
+        for (const line of lines) {
+          if (line.startsWith('event: status')) continue;
+          if (line.startsWith('event: result')) continue;
+          if (line.startsWith('event: error')) continue;
+          if (line.startsWith('data: ')) {
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.message && !parsed.tests) {
+                setStatus(parsed.message);
+              } else if (parsed.tests) {
+                setTests(parsed.tests);
+                setEvalResult(parsed.evalResult);
+                setRevisionsUsed(parsed.revisionsUsed);
+                setTokenInfo({
+                  generationTokens: parsed.generationTokens,
+                  evalTokens: parsed.evalTokens,
+                  totalTokens: parsed.generationTokens + parsed.evalTokens,
+                  estimatedCost: (((parsed.generationTokens + parsed.evalTokens) / 1000) * 0.009).toFixed(4)
+                });
+                setStatus('');
+              } else if (parsed.error) {
+                setError(parsed.error);
+              }
+            } catch (e) {
+              // skip unparseable lines
             }
-          } catch (e) {
-            // skip unparseable lines
           }
         }
       }
+    } catch (err) {
+      setError('Generation failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err) {
-    setError('Generation failed. Please try again.');
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
@@ -79,12 +87,12 @@ export default function App() {
           </p>
         </div>
         <StoryInput onGenerate={handleGenerate} isLoading={isLoading} />
-{status && (
-  <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
-    <span className="animate-pulse mr-2">●</span>{status}
-  </div>
-)}
-{error && <p className="text-red-600 text-sm">{error}</p>}
+        {status && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
+            <span className="animate-pulse mr-2">●</span>{status}
+          </div>
+        )}
+        {error && <p className="text-red-600 text-sm">{error}</p>}
         {tests && (
           <>
             <CoverageMeter score={tests.coverage_score} />
@@ -95,7 +103,7 @@ export default function App() {
             {evalResult && (
               <div className="bg-white rounded-xl shadow p-6 space-y-4">
                 <h2 className="text-lg font-semibold text-gray-800">Evaluation Results</h2>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="text-gray-600 text-sm">Overall Quality Score:</span>
                   <span className="text-2xl font-bold text-gray-900">
                     {evalResult.overall_quality_score}/100
@@ -110,7 +118,7 @@ export default function App() {
                     {evalResult.recommendation.toUpperCase()}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                   {Object.entries(evalResult.dimension_scores).map(([key, value]) => (
                     <div key={key} className="flex justify-between bg-gray-50 rounded px-3 py-2">
                       <span className="text-gray-500 capitalize">{key.replace(/_/g, ' ')}</span>
@@ -132,6 +140,14 @@ export default function App() {
                   <p className="text-xs text-gray-400">
                     Revision passes used: {revisionsUsed}
                   </p>
+                )}
+                {tokenInfo && (
+                  <div className="flex flex-wrap gap-4 text-xs text-gray-400 pt-2 border-t border-gray-100">
+                    <span>Generation: {tokenInfo.generationTokens.toLocaleString()} tokens</span>
+                    <span>Eval: {tokenInfo.evalTokens.toLocaleString()} tokens</span>
+                    <span>Total: {tokenInfo.totalTokens.toLocaleString()} tokens</span>
+                    <span>Est. cost: ~${tokenInfo.estimatedCost}</span>
+                  </div>
                 )}
               </div>
             )}

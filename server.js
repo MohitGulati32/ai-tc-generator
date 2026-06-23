@@ -62,7 +62,7 @@ res.setHeader("Access-Control-Allow-Credentials", "true");
       revisionsUsed,
     });
 
-    sendResult({ tests, evalResult, revisionsUsed });
+    sendResult({ tests, evalResult, revisionsUsed, generationTokens: generationUsage.input_tokens + generationUsage.output_tokens, evalTokens: evalUsage.input_tokens + evalUsage.output_tokens });
     res.end();
 
   } catch (err) {

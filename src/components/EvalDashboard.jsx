@@ -108,7 +108,7 @@ export default function EvalDashboard() {
       {/* Recent runs table */}
       <div>
         <h3 className="text-sm font-medium text-gray-700 mb-3">Recent Runs</h3>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto -mx-6 px-6">
           <table className="w-full text-sm text-left">
             <thead>
               <tr className="text-xs text-gray-400 border-b">

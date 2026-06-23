@@ -12,11 +12,11 @@ export default function TestResults({ results }) {
 
   return (
     <div className="bg-white rounded-lg shadow">
-      <div className="flex border-b">
+      <div className="flex overflow-x-auto border-b scrollbar-hide">
         {TABS.map(tab => (
           <button
             key={tab.key}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors
+            className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors
               ${activeTab === tab.key
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'}`}
@@ -32,9 +32,9 @@ export default function TestResults({ results }) {
       <div className="p-4 space-y-4">
         {results[activeTab]?.map(test => (
           <div key={test.id} className="border border-gray-200 rounded-md p-4">
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="font-medium text-gray-900">{test.title}</h3>
-              <span className={`text-xs px-2 py-1 rounded-full font-medium
+            <div className="flex justify-between items-start mb-2 gap-2">
+              <h3 className="font-medium text-gray-900 text-sm sm:text-base">{test.title}</h3>
+              <span className={`flex-shrink-0 text-xs px-2 py-1 rounded-full font-medium
                 ${test.priority === 'P1' ? 'bg-red-100 text-red-700' :
                   test.priority === 'P2' ? 'bg-yellow-100 text-yellow-700' :
                   'bg-green-100 text-green-700'}`}>
