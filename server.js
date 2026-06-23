@@ -16,9 +16,17 @@ app.get("/", (req, res) => {
   res.json({ status: "ok", service: "tc-generator-api" });
 });
 
+app.options("/api/generate", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "https://tc-generator-five.vercel.app");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.sendStatus(204);
+});
+
 app.post("/api/generate", async (req, res) => {
   const { story } = req.body;
-
+res.setHeader("Access-Control-Allow-Origin", "https://tc-generator-five.vercel.app");
+res.setHeader("Access-Control-Allow-Credentials", "true");
   if (!story) {
     return res.status(400).json({ error: "No story provided" });
   }
