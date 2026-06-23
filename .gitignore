@@ -5,3 +5,4 @@ dist/
 eval_log.jsonl
 
 .vercel
+.env.production
