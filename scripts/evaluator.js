@@ -1,5 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk";
+import dotenv from "dotenv";
+dotenv.config();
 
+import Anthropic from "@anthropic-ai/sdk";
+import { execSync } from "child_process";
+import path from "path";
 
 const client = new Anthropic();
 
@@ -62,4 +66,42 @@ recommendation must be exactly one of: approve, revise, reject.`;
     usage: evalResponse.usage,
     stop_reason: evalResponse.stop_reason,
   };
+}
+
+// RAG triad evaluation - scores the quality of the RAG pipeline output
+// Called from pipeline.js after generation, uses retrieved_context from generator
+export function evaluateRagTriad(userStory, retrievedContext, generatedOutput) {
+  if (!retrievedContext) {
+    console.warn("RAG triad skipped: no retrieved context available");
+    return null;
+  }
+
+  try {
+    const ragDir = path.join(process.cwd(), "rag");
+    const payload = JSON.stringify({
+      user_story: userStory,
+      retrieved_context: retrievedContext,
+      generated_output: generatedOutput
+    });
+
+    const escaped = payload.replace(/'/g, "'\\''");
+
+    const env = {
+      ...process.env,
+      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY
+    };
+
+    console.log("RAG eval - API key present:", !!env.ANTHROPIC_API_KEY);
+
+    const result = execSync(
+  `./.venv/bin/python3 evaluate_rag.py '${escaped}'`,
+  { cwd: ragDir, encoding: "utf8", env }
+);
+
+    return JSON.parse(result);
+  } catch (err) {
+    console.warn("RAG triad evaluation failed:", err.message);
+    console.warn("Full error:", err.stderr);
+    return null;
+  }
 }

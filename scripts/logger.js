@@ -8,6 +8,7 @@ export function logEvalResult({
   evalUsage,
   evalResult,
   revisionsUsed,
+  ragScores,
 }) {
   const logEntry = {
     timestamp: new Date().toISOString(),
@@ -25,6 +26,16 @@ export function logEvalResult({
     recommendation: evalResult.recommendation,
     revisionsUsed,
     hallucinationFlags: evalResult.hallucination_flags,
+    ragScores: ragScores ? {
+      context_relevance: ragScores.context_relevance.score,
+      groundedness: ragScores.groundedness.score,
+      answer_relevance: ragScores.answer_relevance.score,
+      average: (
+        (ragScores.context_relevance.score +
+         ragScores.groundedness.score +
+         ragScores.answer_relevance.score) / 3
+      ).toFixed(3)
+    } : null,
   };
 
   fs.appendFileSync(LOG_FILE, JSON.stringify(logEntry) + "\n");

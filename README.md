@@ -31,13 +31,21 @@ User Story Input
 |   (scripts/     |  max_tokens: 8000
 |   generator.js) |  Prompt cached via cache_control
 +-----------------+
+       ^
+       | Few-shot context (top-5 similar test cases)
        |
-       | Structured JSON test suite
++-----------------+
+|   RAG RETRIEVER |  LlamaIndex + BAAI/bge-small-en-v1.5
+|   (rag/         |  Sentence window retrieval (window=3)
+|   retrieve.py)  |  Vector store of past test cases
++-----------------+
+       |
+       | Structured JSON test suite + retrieved_context
        v
 +-----------------+
 |   EVALUATOR     |  claude-sonnet-4-6
 |   (scripts/     |  max_tokens: 2000
-|   evaluator.js) |  5-dimension scoring
+|   evaluator.js) |  5-dimension scoring + RAG triad
 +-----------------+
        |
        | recommendation: approve / revise / reject
@@ -94,6 +102,42 @@ Each generated test suite is scored across five dimensions (0-100):
 
 ---
 
+## RAG Pipeline
+
+Test case generation is augmented with retrieval from a vector store of past test cases, applying the sentence window retrieval technique from the DeepLearning.AI Advanced RAG course.
+
+**How it works:**
+
+1. User story is embedded using `BAAI/bge-small-en-v1.5` (free, no OpenAI dependency)
+2. Top-5 most similar past test cases retrieved from a local vector store
+3. Sentence window retrieval (window=3) expands each matched sentence to include 3 surrounding sentences for richer context
+4. Retrieved examples injected into the generator prompt as few-shot reference inside `<examples>` tags
+5. Generation falls back gracefully to no-context mode if retrieval fails
+6. Output quality scored using the RAG triad: Context Relevance, Groundedness, Answer Relevance
+7. RAG triad scores logged alongside existing eval scores in `eval_log.jsonl`
+
+**RAG triad scoring:**
+
+| Metric | What It Measures |
+|--------|-----------------|
+| Context Relevance | Are the retrieved past test cases relevant to the user story? |
+| Groundedness | Are the generated test cases grounded in retrieved examples, not hallucinated? |
+| Answer Relevance | Do the generated test cases actually address the user story requirements? |
+
+Each metric scores 0.0 to 1.0. Claude claude-sonnet-4-6 is used as the judge model.
+
+**Setup RAG layer (first time only):**
+
+```bash
+cd rag
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 build_index.py
+```
+
+---
+
 ## Sample Eval Log
 
 Real scores from the first four runs:
@@ -117,29 +161,37 @@ Real scores from the first four runs:
 
 ```
 tc-generator/
+├── rag/
+│   ├── data/
+│   │   ├── sample_test_cases/    # Knowledge base: past test cases by feature
+│   │   └── vector_store/         # Persisted LlamaIndex vector store (gitignored)
+│   ├── build_index.py            # One-time script to embed and store test cases
+│   ├── retrieve.py               # Retrieves top-k similar test cases for a query
+│   ├── evaluate_rag.py           # RAG triad evaluator using Claude as judge
+│   └── requirements.txt          # Python dependencies
 ├── api/
-│   ├── generate.js           # Vercel serverless handler (proxies to pipeline)
-│   └── logs.js               # Vercel serverless handler for log reads
+│   ├── generate.js               # Vercel serverless handler (proxies to pipeline)
+│   └── logs.js                   # Vercel serverless handler for log reads
 ├── scripts/
-│   ├── generator.js          # Claude generator call, returns { result, usage }
-│   ├── evaluator.js          # Claude evaluator call, 5-dimension scoring
-│   ├── pipeline.js           # Generator > Evaluator > Revision loop + SSE callbacks
-│   └── logger.js             # Appends entries to eval_log.jsonl
+│   ├── generator.js              # Claude generator call, RAG-augmented prompt, returns { result, usage, retrieved_context }
+│   ├── evaluator.js              # Claude evaluator call, 5-dimension scoring + RAG triad
+│   ├── pipeline.js               # Generator > Evaluator > Revision loop + SSE callbacks
+│   └── logger.js                 # Appends entries to eval_log.jsonl
 ├── src/
 │   ├── components/
-│   │   ├── StoryInput.jsx    # User story textarea
-│   │   ├── TestResults.jsx   # Tabbed results panel
-│   │   ├── CoverageMeter.jsx # Visual coverage percentage
-│   │   ├── ExportButton.jsx  # Copy / download output
-│   │   └── EvalDashboard.jsx # Quality trends, dimension scores, run history
-│   ├── App.jsx               # SSE stream reader, status display
+│   │   ├── StoryInput.jsx        # User story textarea
+│   │   ├── TestResults.jsx       # Tabbed results panel
+│   │   ├── CoverageMeter.jsx     # Visual coverage percentage
+│   │   ├── ExportButton.jsx      # Copy / download output
+│   │   └── EvalDashboard.jsx     # Quality trends, dimension scores, run history
+│   ├── App.jsx                   # SSE stream reader, status display
 │   └── main.jsx
-├── server.js                 # Express API with SSE streaming, /api/generate and /api/logs
-├── railway.toml              # Railway deployment config
-├── vercel.json               # Vercel routing config
-├── vite.config.js            # Vite + proxy config
+├── server.js                     # Express API with SSE streaming, /api/generate and /api/logs
+├── railway.toml                  # Railway deployment config
+├── vercel.json                   # Vercel routing config
+├── vite.config.js                # Vite + proxy config
 ├── package.json
-└── eval_log.jsonl            # Runtime log, gitignored
+└── eval_log.jsonl                # Runtime log, gitignored
 ```
 
 ---
@@ -161,7 +213,7 @@ The app is split across two services:
 
 ## Local Setup
 
-**Prerequisites:** Node.js v20+, Anthropic API key
+**Prerequisites:** Node.js v20+, Python 3.9+, Anthropic API key
 
 ```bash
 git clone https://github.com/MohitGulati32/ai-tc-generator.git
@@ -173,6 +225,17 @@ Create a `.env` file in the project root:
 
 ```
 ANTHROPIC_API_KEY=your_key_here
+```
+
+Set up the RAG layer (first time only):
+
+```bash
+cd rag
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 build_index.py
+cd ..
 ```
 
 Start the backend (terminal 1):
@@ -192,6 +255,10 @@ Open `http://localhost:5173` in your browser.
 ---
 
 ## Key Engineering Decisions
+
+**RAG-augmented generation** - Before calling Claude, the pipeline retrieves the top-5 most similar past test cases from a vector store using sentence window retrieval (window=3). These are injected as few-shot examples into the generator prompt, improving format consistency and coverage quality. Retrieval is handled by a Python layer using LlamaIndex and a free HuggingFace embedding model, keeping the pipeline independent of OpenAI.
+
+**RAG triad evaluation** - A separate evaluation pass scores the RAG pipeline output across three dimensions: Context Relevance (were the right examples retrieved?), Groundedness (is the output based on retrieved context?), and Answer Relevance (does the output address the user story?). Claude acts as the judge model, returning scores 0.0 to 1.0 per dimension.
 
 **Prompt caching** - The generator system prompt is cached via `cache_control: { type: "ephemeral" }`. This reduces cost and latency when multiple stories are generated in a session.
 
@@ -214,6 +281,8 @@ Open `http://localhost:5173` in your browser.
 ## Known Limitations
 
 **Eval log resets on redeploy** - `eval_log.jsonl` lives on Railway's ephemeral filesystem and is wiped on every redeploy. The production fix is to move logs to a persistent store like PostgreSQL or a Railway volume. This is a known tradeoff for the current portfolio version.
+
+**RAG vector store is local only** - The vector store lives on disk in `rag/data/vector_store/` and is gitignored. On Railway the store needs to be rebuilt on each deploy by running `build_index.py` as part of the start script, or moved to a persistent volume.
 
 **Railway free tier cold starts** - Railway spins down the container after a period of inactivity. The first request after idle takes 30-60 seconds longer than usual while the container starts up. Subsequent requests run at normal speed.
 
@@ -258,4 +327,5 @@ data: {"tests": {...}, "evalResult": {...}, "revisionsUsed": 1}
 - [x] Phase 3 - Evaluation layer, 5-dimension scoring, revision loop, eval logger
 - [x] Phase 4 - Eval dashboard, quality trends, dimension bar chart, run history
 - [x] Deploy - Vercel (frontend) + Railway (backend), live at tc-generator-five.vercel.app
-- [ ] Phase 5 - Example stories, token cost display, mobile layout polish
+- [x] Phase 5 - RAG retrieval layer, sentence window retrieval, RAG triad evaluation, vector store of past test cases
+- [ ] Phase 6 - Example stories, token cost display, mobile layout polish

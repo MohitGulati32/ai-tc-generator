@@ -1,11 +1,12 @@
 import dotenv from "dotenv";
 dotenv.config();
+console.log("API key loaded:", !!process.env.ANTHROPIC_API_KEY, "length:", process.env.ANTHROPIC_API_KEY?.length);
 
 import express from "express";
 import cors from "cors";
 import fs from "fs";
 import { generateWithEval } from "./scripts/pipeline.js";
-import { logEvalResult } from "./scripts/logger.js";
+
 
 const app = express();
 app.use(cors({ origin: "https://tc-generator-five.vercel.app" }));
@@ -54,13 +55,7 @@ res.setHeader("Access-Control-Allow-Credentials", "true");
     const { tests, evalResult, revisionsUsed, generationUsage, evalUsage } =
       await generateWithEval(story, 2, sendStatus);
 
-    logEvalResult({
-      userStory: story,
-      generationUsage,
-      evalUsage,
-      evalResult,
-      revisionsUsed,
-    });
+    
 
     sendResult({ tests, evalResult, revisionsUsed, generationTokens: generationUsage.input_tokens + generationUsage.output_tokens, evalTokens: evalUsage.input_tokens + evalUsage.output_tokens });
     res.end();

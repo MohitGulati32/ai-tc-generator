@@ -3,6 +3,8 @@ node_modules/
 dist/
 *.log
 eval_log.jsonl
-
 .vercel
 .env.production
+rag/data/vector_store/
+rag/__pycache__/
+rag/.venv/

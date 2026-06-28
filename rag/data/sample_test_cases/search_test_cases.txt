@@ -1,0 +1,17 @@
+Feature: Search
+ 
+Test Case 1: Search with valid keyword returns results
+Steps: Navigate to search bar. Enter a keyword that matches existing products. Press Enter or click Search.
+Expected: Results page shown with matching items. Result count displayed. Items sorted by relevance by default.
+ 
+Test Case 2: Search with no matching results
+Steps: Navigate to search bar. Enter a keyword with no matching products. Press Enter or click Search.
+Expected: Empty results page shown. Message displayed: no results found for your search. Suggested alternatives or popular items shown.
+ 
+Test Case 3: Search with special characters
+Steps: Navigate to search bar. Enter special characters such as @#$% as the search query. Press Enter.
+Expected: No server error. Either empty results shown gracefully or characters sanitised and search attempted.
+ 
+Test Case 4: Search with partial keyword
+Steps: Navigate to search bar. Enter first 3 letters of a product name. Press Enter.
+Expected: Results include products matching the partial keyword. Autocomplete or fuzzy match behaviour applies where supported.

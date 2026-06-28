@@ -1,0 +1,17 @@
+Feature: User Login
+
+Test Case 1: Valid credentials
+Steps: Navigate to login page. Enter valid email and password. Click Login.
+Expected: User is redirected to dashboard. Session token is set in cookies.
+
+Test Case 2: Invalid password
+Steps: Navigate to login page. Enter valid email. Enter wrong password. Click Login.
+Expected: Error message displayed. User stays on login page. No session created.
+
+Test Case 3: Empty fields
+Steps: Navigate to login page. Leave email and password blank. Click Login.
+Expected: Validation errors shown for both fields.
+
+Test Case 4: Account locked after 5 failed attempts
+Steps: Enter wrong password 5 times consecutively.
+Expected: Account locked message shown. User cannot attempt again for 15 minutes.

@@ -1,0 +1,18 @@
+
+Feature: User Profile
+ 
+Test Case 1: Update profile with valid details
+Steps: Log in. Navigate to profile settings. Update display name and phone number with valid values. Click Save.
+Expected: Profile updated successfully. Success message shown. Updated values reflected immediately on profile page.
+ 
+Test Case 2: Update email to an already registered email
+Steps: Log in. Navigate to profile settings. Change email to an address already used by another account. Click Save.
+Expected: Error message shown indicating email is already in use. Profile not updated. Existing email retained.
+ 
+Test Case 3: Upload valid profile photo
+Steps: Log in. Navigate to profile settings. Click change photo. Upload a valid JPG or PNG file under 5MB. Click Save.
+Expected: Profile photo updated. New photo displayed in header and profile page. Old photo replaced.
+ 
+Test Case 4: Submit profile form with empty required fields
+Steps: Log in. Navigate to profile settings. Clear the display name field, which is required. Click Save.
+Expected: Validation error shown on the empty field. Profile not saved. User remains on settings page with error highlighted.

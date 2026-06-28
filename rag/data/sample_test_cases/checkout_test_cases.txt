@@ -1,0 +1,18 @@
+
+Feature: Checkout
+ 
+Test Case 1: Successful checkout with valid payment
+Steps: Add item to cart. Navigate to checkout. Enter valid shipping address. Enter valid credit card details. Click Place Order.
+Expected: Order confirmation page shown. Order ID generated. Confirmation email sent to user.
+ 
+Test Case 2: Checkout with expired credit card
+Steps: Add item to cart. Navigate to checkout. Enter valid shipping address. Enter expired credit card details. Click Place Order.
+Expected: Payment declined error shown. Order not created. User remains on payment step.
+ 
+Test Case 3: Checkout with empty cart
+Steps: Navigate to checkout page directly with empty cart.
+Expected: User redirected to cart page. Message shown: your cart is empty.
+ 
+Test Case 4: Checkout with out-of-stock item
+Steps: Add item to cart. Item goes out of stock before checkout completes. Attempt to place order.
+Expected: Error shown indicating item is no longer available. Order not placed. Cart updated to reflect unavailability.
