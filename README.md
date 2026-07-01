@@ -2,7 +2,7 @@
 
 A web app that converts user stories into structured test suites using the Claude API. The differentiator is a full evaluation layer built on top of the generator - a second Claude call that grades, scores, and flags issues in the generated output across five quality dimensions. This turns a single prompt wrapper into a two-agent system with observable, measurable output quality.
 
-**Live:** https://tc-generator-five.vercel.app | **Stack:** Claude API, Node.js, Express, React, Vite, Tailwind CSS, Recharts
+**Stack:** Claude API, Node.js, Express, React, Vite, Tailwind CSS, Recharts
 
 ---
 
@@ -326,6 +326,6 @@ data: {"tests": {...}, "evalResult": {...}, "revisionsUsed": 1}
 - [x] Phase 2 - React UI, tabbed results, coverage meter, export button
 - [x] Phase 3 - Evaluation layer, 5-dimension scoring, revision loop, eval logger
 - [x] Phase 4 - Eval dashboard, quality trends, dimension bar chart, run history
-- [x] Deploy - Vercel (frontend) + Railway (backend), live at tc-generator-five.vercel.app
+- [x] Deploy - Vercel (frontend) + Railway (backend)
 - [x] Phase 5 - RAG retrieval layer, sentence window retrieval, RAG triad evaluation, vector store of past test cases
 - [ ] Phase 6 - Example stories, token cost display, mobile layout polish
